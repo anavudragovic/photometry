@@ -1,6 +1,3 @@
-# photometry
-Photometry of galaxies
-
 # aper_stars.py
 Stellar aperture photometry done with aperture = 1.7*fwhm. Stars are found using IRAFStarFinder. 
 Sky in each annulus is a median value obtained after 3-sigma clipping, along with stddev. 
