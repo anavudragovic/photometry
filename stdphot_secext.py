@@ -17,6 +17,12 @@ import fnmatch
 from matplotlib import rc
 from matplotlib.font_manager import FontProperties
 from matplotlib import rcParams
+from statsmodels.graphics.gofplots import qqplot
+from scipy.stats import shapiro
+from scipy.stats import normaltest
+import statsmodels.api as sm    
+from scipy.stats import anderson
+
 font = {'family' : 'normal',
         'weight' : 'normal',
         'size'   : 13}
@@ -302,7 +308,7 @@ for i in range(0,len(filters)):
 title = ["Extinction correction","Extinction + colour correction", "Extinction + secondary extinction + colour correction"]
 cols = ['C0','C1','C2', 'C3']
 for m in range(0,nm):
-    print('Output figure: B'+str(m)+'.png')
+    print('Output figure: B'+str(m)+'.pdf')
     fig = plt.figure()
     # set height ratios for subplots
     gs = gridspec.GridSpec(2, 1, height_ratios=[3, 1]) 
@@ -319,10 +325,10 @@ for m in range(0,nm):
     ax2.set_ylim(-0.32,0.32)
     ax2.errorbar(Bcal[m]+df['MagB'],Bcal[m]+df['MagB']-df['Bcat'],xerr=np.sqrt(BcalErr[m]**2+df['MagBErr']**2),yerr=np.sqrt(df['BcatErr']**2+BcalErr[m]**2+df['MagBErr']**2), fmt='o', fillstyle='none',ms=3,ecolor=cols[0],mfc=cols[0],mec=cols[0]);
     ax2.axhline(y=0,color='k',lw=1,ls='--')
-    plt.savefig('B'+str(m)+'.png')
+    plt.savefig('B'+str(m)+'.pdf',format='pdf')
 # In the V-band:
 for m in range(0,nm):
-    print('Output figure: V'+str(m)+'.png')
+    print('Output figure: V'+str(m)+'.pdf')
     fig = plt.figure()
     # set height ratios for subplots
     gs = gridspec.GridSpec(2, 1, height_ratios=[3, 1]) 
@@ -339,10 +345,10 @@ for m in range(0,nm):
     ax2.set_ylim(-0.32,0.32)
     ax2.errorbar(Vcal[m]+df['MagB'],Vcal[m]+df['MagV']-df['Vcat'],xerr=np.sqrt(VcalErr[m]**2+df['MagVErr']**2),yerr=np.sqrt(df['VcatErr']**2+VcalErr[m]**2+df['MagVErr']**2), fmt='o', fillstyle='none',ms=3,ecolor=cols[1],mfc=cols[1],mec=cols[1],alpha=0.7);
     ax2.axhline(y=0,color='k',lw=1,ls='--')
-    plt.savefig('V'+str(m)+'.png')
+    plt.savefig('V'+str(m)+'.pdf',format='pdf')
 # In the R-band:
 for m in range(0,nm):
-    print('Output figure: V'+str(m)+'.png')
+    print('Output figure: R'+str(m)+'.pdf')
     fig = plt.figure()
     # set height ratios for subplots
     gs = gridspec.GridSpec(2, 1, height_ratios=[3, 1]) 
@@ -359,10 +365,10 @@ for m in range(0,nm):
     ax2.set_ylim(-0.32,0.32)
     ax2.errorbar(Rcal[m]+df['MagR'],Rcal[m]+df['MagR']-df['Rcat'],xerr=np.sqrt(RcalErr[m]**2+df['MagRErr']**2),yerr=np.sqrt(df['RcatErr']**2+RcalErr[m]**2+df['MagRErr']**2), fmt='o', fillstyle='none',ms=3,ecolor=cols[2],mfc=cols[2],mec=cols[2],alpha=0.7);
     ax2.axhline(y=0,color='k',lw=1,ls='--')
-    plt.savefig('R'+str(m)+'.png')
+    plt.savefig('R'+str(m)+'.pdf',format='pdf')
 # In the I-band:
 for m in range(0,nm):
-    print('Output figure: I'+str(m)+'.png')
+    print('Output figure: I'+str(m)+'.pdf')
     fig = plt.figure()
     # set height ratios for subplots
     gs = gridspec.GridSpec(2, 1, height_ratios=[3, 1]) 
@@ -379,22 +385,22 @@ for m in range(0,nm):
     ax2.set_ylim(-0.32,0.32)
     ax2.errorbar(Ical[m]+df['MagI'],Ical[m]+df['MagI']-df['Icat'],xerr=np.sqrt(IcalErr[m]**2+df['MagIErr']**2),yerr=np.sqrt(df['IcatErr']**2+IcalErr[m]**2+df['MagIErr']**2), fmt='o', fillstyle='none',ms=3,ecolor=cols[3],mfc=cols[3],mec=cols[3],alpha=0.7);
     ax2.axhline(y=0,color='k',lw=1,ls='--')
-    plt.savefig('I'+str(m)+'.png')
-
+    plt.savefig('I'+str(m)+'.pdf',format='pdf')
 
 for i in range(0,len(filters)):
     for m in range(0,nm):
         if (fnmatch.fnmatch(filters[i], 'B')):
-            outfile ='B'+str(m)+'_resi.png'
+            outfile ='B'+str(m)+'_resi.pdf'
             residuals = Bresi[m]
             xlab = r'$\Delta B$'
             y1 = np.max(stats.norm.pdf(Bresi[0], np.mean(Bresi[0]), np.std(Bresi[0])))
             y2 = np.max(stats.norm.pdf(Bresi[1], np.mean(Bresi[1]), np.std(Bresi[1])))
             y3 = np.max(stats.norm.pdf(Bresi[2], np.mean(Bresi[2]), np.std(Bresi[2])))            
             ylimit = np.max([y1,y2,y3])+.5
+            xlim=[-0.3,0.3]
             colplot = cols[0]
         elif (fnmatch.fnmatch(filters[i], 'V')):
-            outfile ='V'+str(m)+'_resi.png'
+            outfile ='V'+str(m)+'_resi.pdf'
             residuals = Vresi[m]
             xlab = r'$\Delta V$'
             y1 = np.max(stats.norm.pdf(Vresi[0], np.mean(Vresi[0]), np.std(Vresi[0])))
@@ -402,8 +408,10 @@ for i in range(0,len(filters)):
             y3 = np.max(stats.norm.pdf(Vresi[2], np.mean(Vresi[2]), np.std(Vresi[2])))            
             ylimit = np.max([y1,y2,y3])+.5
             colplot = cols[1]
+            xlim=[-0.3,0.3]
+
         elif (fnmatch.fnmatch(filters[i], 'R')):
-            outfile ='R'+str(m)+'_resi.png'
+            outfile ='R'+str(m)+'_resi.pdf'
             residuals = Rresi[m]
             xlab = r'$\Delta R$'
             y1 = np.max(stats.norm.pdf(Rresi[0], np.mean(Rresi[0]), np.std(Rresi[0])))
@@ -411,8 +419,9 @@ for i in range(0,len(filters)):
             y3 = np.max(stats.norm.pdf(Rresi[2], np.mean(Rresi[2]), np.std(Rresi[2])))            
             ylimit = np.max([y1,y2,y3])+1
             colplot=cols[2]
+            xlim=[-0.3,0.3]
         else: 
-            outfile ='I'+str(m)+'_resi.png'
+            outfile ='I'+str(m)+'_resi.pdf'
             residuals = Iresi[m]
             xlab = r'$\Delta I$'
             y1 = np.max(stats.norm.pdf(Iresi[0], np.mean(Iresi[0]), np.std(Iresi[0])))
@@ -420,11 +429,11 @@ for i in range(0,len(filters)):
             y3 = np.max(stats.norm.pdf(Iresi[2], np.mean(Iresi[2]), np.std(Iresi[2])))            
             ylimit = np.max([y1,y2,y3])+1.5
             colplot=cols[3]
-           
+            xlim=[-0.3,0.3]
+          
         normal_distribution = stats.norm.pdf(residuals, np.mean(residuals), np.std(residuals))
-        print("Max: ", np.max(normal_distribution))
         x = residuals
-        fig = plt.subplots(figsize=(8, 4))
+        fig = plt.subplots(figsize=(6, 4))
         ax = sns.kdeplot(x, shade=False, color=colplot)
         kdeline = ax.lines[0]
         xs = kdeline.get_xdata()
@@ -435,12 +444,47 @@ for i in range(0,len(filters)):
         right = middle + sdev
         ax.set_xlabel(xlab)
         ax.set_ylabel('Counts')
-        ax.set_title(title[m])
-        ax.vlines(middle, 0, np.interp(middle, xs, ys), color=colplot, ls=':')
+        #ax.set_title(title[m])
         ax.fill_between(xs, 0, ys, facecolor=colplot, alpha=0.2)
-        ax.plot(residuals, normal_distribution,  color=colplot, ls='--')
         ax.fill_between(xs, 0, ys, where=(left <= xs) & (xs <= right), interpolate=True, facecolor=colplot, alpha=0.2)
-        #ax.set_xlim(-0.25,0.3)
+        ax.plot(residuals, normal_distribution,  color=colplot, ls='--')
+        ax.vlines(middle, 0, np.interp(middle, xs, ys), color=colplot, ls=':')
+        ax.set_xlim(-0.3,0.3)
         ax.set_ylim(0,ylimit)
-        plt.savefig(outfile)
-# 'crimson'
+        plt.savefig(outfile,format='pdf')
+        # Test for the normality of residuals' distributions using the Shapiro-Wilk test 
+        # implemented in Python via shapiro() SciPy function 
+        stat, p = shapiro(np.array(residuals))
+        # D’Agostino’s K^2 Test via the normaltest() SciPy function
+        statn, pn = normaltest(np.array(residuals))
+        # Anderson-Darling Test via the anderson() SciPy function
+        result = anderson(np.array(residuals))
+        print('-----------------------',filters[i],models[m],'-----------------------')
+        print('Stdev = ',np.std(x))
+        print('Shapiro: Statistics=%.3f, p=%.3f' % (stat, p))
+        alpha = 0.05
+        if p > alpha:
+            print('     Sample looks Gaussian (fail to reject H0)')
+        else:
+            print('     Sample does not look Gaussian (reject H0)')
+        print('D\'Agostino\'s K^2: Statistics=%.3f, p=%.3f' % (statn, pn))
+        if pn > alpha:
+	         print('     Sample looks Gaussian (fail to reject H0)')
+        else:
+	         print('     Sample does not look Gaussian (reject H0)')
+        print('Anderson-Darling: Statistic: %.3f' % result.statistic)
+        # Interpret statistical results
+        p = 0
+        for j in range(len(result.critical_values)):
+            sl, cv = result.significance_level[j], result.critical_values[j]
+            if result.statistic < result.critical_values[j]:
+                print('     %.3f: %.3f, data looks normal (fail to reject H0)' % (sl, cv))
+            else: 
+                print('     %.3f: %.3f, data does not look normal (reject H0)' % (sl, cv))
+        # QQ Plot:
+        #fig = plt.figure(figsize=(6, 4))
+        #pp = sm.ProbPlot(np.array(residuals), fit=True)
+        #qq = pp.qqplot(marker='o', markerfacecolor=colplot, markeredgecolor=colplot,alpha=0.5)
+        #sm.qqline(qq.axes[0], line='45', fmt='k--')
+        #plt.savefig('qq'+outfile)
+        # 'crimson'
