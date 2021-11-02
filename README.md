@@ -1,5 +1,5 @@
 # aper_stars.py
-Stellar aperture photometry done with aperture = 10 pix (2.2*fwhm). Celestial coordinates are used to pick stars in the image. 
+Stellar aperture photometry done with aperture that needs to be set manually (rule of thumb: 2.2 fwhm). Celestial coordinates are used to pick stars in the image. 
 Sky in each annulus is a median value obtained after 3-sigma clipping, along with stddev. 
 This sky value is subtracted from each aperture sum, and stddev was used for error calculation. 
 Magnitude errors are done as in Iraf, although there was no output info on number of pixels in sky annulus. 
